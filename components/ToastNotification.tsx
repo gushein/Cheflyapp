@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
-import { CheckCircle, AlertCircle, Info, X } from 'lucide-react-native';
+import { CircleCheck as CheckCircle, CircleAlert as AlertCircle, Info, X } from 'lucide-react-native';
 
 interface ToastNotificationProps {
   message: string;
