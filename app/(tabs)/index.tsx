@@ -1,114 +1,87 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
-import { Search, Filter, MapPin, Calendar, Settings } from 'lucide-react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { Bell, User, TrendingUp } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
-import { useTranslation } from '@/utils/translations';
-import { ChefCard } from '@/components/ChefCard';
-import { LoyaltyCard } from '@/components/LoyaltyCard';
-import { SubscriptionCard } from '@/components/SubscriptionCard';
-import { AIMenuSuggestions } from '@/components/AIMenuSuggestions';
-import { LiveTracking } from '@/components/LiveTracking';
-import { NotificationCenter } from '@/components/NotificationCenter';
-import { LanguageSelector } from '@/components/LanguageSelector';
+import { OnboardingScreen } from '@/components/OnboardingScreen';
+import { SearchBar } from '@/components/SearchBar';
+import { CategoryCard } from '@/components/CategoryCard';
+import { RecipeCard } from '@/components/RecipeCard';
+import { RecipeDetailScreen } from '@/components/RecipeDetailScreen';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { mockChefs, mockUser, mockSubscriptions, mockAISuggestions } from '@/data/mockData';
-import { Chef, MealType, AIMenuSuggestion } from '@/types';
+import { mockRecipes, mockUser, trendingCategories } from '@/data/mockData';
+import { Recipe } from '@/types';
 
-const MEAL_TYPES: { id: MealType; label: string; emoji: string }[] = [
-  { id: 'home-style', label: 'Home Style', emoji: '🏠' },
-  { id: 'diet-friendly', label: 'Diet Friendly', emoji: '🥗' },
-  { id: 'fast-food', label: 'Fast Food', emoji: '🍔' },
-  { id: 'gourmet', label: 'Gourmet', emoji: '🍷' },
-  { id: 'vegetarian', label: 'Vegetarian', emoji: '🥬' },
-  { id: 'vegan', label: 'Vegan', emoji: '🌱' },
-];
-
-export default function UserPanel() {
+export default function HomeScreen() {
   const { state, dispatch } = useApp();
-  const t = useTranslation(state.currentLanguage);
+  const [showOnboarding, setShowOnboarding] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedMealType, setSelectedMealType] = useState<MealType | null>(null);
-  const [filteredChefs, setFilteredChefs] = useState<Chef[]>([]);
-  const [selectedChef, setSelectedChef] = useState<Chef | null>(null);
-  const [showLanguageSelector, setShowLanguageSelector] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [filteredRecipes, setFilteredRecipes] = useState<Recipe[]>([]);
 
   useEffect(() => {
     // Initialize app data
     dispatch({ type: 'SET_USER', payload: mockUser });
-    dispatch({ type: 'SET_CHEFS', payload: mockChefs });
-    dispatch({ type: 'SET_SUBSCRIPTIONS', payload: mockSubscriptions });
-    dispatch({ type: 'SET_AI_SUGGESTIONS', payload: mockAISuggestions });
+    setFilteredRecipes(mockRecipes);
   }, [dispatch]);
 
   useEffect(() => {
-    let filtered = state.chefs;
+    let filtered = mockRecipes;
     
     if (searchQuery) {
-      filtered = filtered.filter(chef =>
-        chef.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        chef.specialties.some(specialty => 
-          specialty.toLowerCase().includes(searchQuery.toLowerCase())
-        )
+      filtered = filtered.filter(recipe =>
+        recipe.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        recipe.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        recipe.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
     
-    if (selectedMealType) {
-      filtered = filtered.filter(chef =>
-        chef.specialties.some(specialty => 
-          specialty.toLowerCase().includes(selectedMealType.toLowerCase())
-        )
+    if (selectedCategory) {
+      filtered = filtered.filter(recipe =>
+        recipe.tags.includes(selectedCategory) ||
+        recipe.category === selectedCategory
       );
     }
     
-    setFilteredChefs(filtered);
-  }, [state.chefs, searchQuery, selectedMealType]);
+    setFilteredRecipes(filtered);
+  }, [searchQuery, selectedCategory]);
 
-  const handleChefSelect = (chef: Chef) => {
-    setSelectedChef(chef);
-    Alert.alert(
-      'Book Chef',
-      `Book ${chef.name} for your meal?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Book Now', onPress: () => handleBooking(chef) }
-      ]
+  const handleCompleteOnboarding = () => {
+    setShowOnboarding(false);
+  };
+
+  const handleCategorySelect = (categoryId: string) => {
+    setSelectedCategory(selectedCategory === categoryId ? null : categoryId);
+  };
+
+  const handleRecipeSelect = (recipe: Recipe) => {
+    setSelectedRecipe(recipe);
+  };
+
+  const handleStartCooking = () => {
+    // Navigate to cooking mode
+    console.log('Starting cooking mode for:', selectedRecipe?.title);
+    setSelectedRecipe(null);
+  };
+
+  const handleFilter = () => {
+    // Show filter modal
+    console.log('Show filter modal');
+  };
+
+  if (showOnboarding) {
+    return <OnboardingScreen onComplete={handleCompleteOnboarding} />;
+  }
+
+  if (selectedRecipe) {
+    return (
+      <RecipeDetailScreen
+        recipe={selectedRecipe}
+        onBack={() => setSelectedRecipe(null)}
+        onStartCooking={handleStartCooking}
+      />
     );
-  };
-
-  const handleBooking = (chef: Chef) => {
-    if (!selectedMealType) {
-      Alert.alert('Please select a meal type first');
-      return;
-    }
-
-    const newBooking = {
-      id: `booking-${Date.now()}`,
-      userId: state.currentUser?.id || 'user-1',
-      chefId: chef.id,
-      mealType: selectedMealType,
-      date: '2024-01-15',
-      time: '18:00',
-      duration: 3,
-      totalPrice: 240,
-      status: 'pending' as const,
-      address: state.currentUser?.address || '123 Main St, City, State 12345',
-      createdAt: new Date()
-    };
-
-    dispatch({ type: 'ADD_BOOKING', payload: newBooking });
-    Alert.alert('Success', 'Booking request sent to chef!');
-    setSelectedChef(null);
-  };
-
-  const handleAISuggestionSelect = (suggestion: AIMenuSuggestion) => {
-    setSelectedMealType(suggestion.mealType);
-    Alert.alert('AI Suggestion', `Applied ${suggestion.cuisineType} ${suggestion.mealType} suggestion!`);
-  };
-
-  // Get active booking for live tracking
-  const activeBooking = state.bookings.find(booking => 
-    ['chef-en-route', 'chef-arrived', 'cooking'].includes(booking.status)
-  );
+  }
 
   if (state.loading) {
     return <LoadingSpinner />;
@@ -116,127 +89,98 @@ export default function UserPanel() {
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <Text style={styles.title}>{t.findYourChef}</Text>
-          <TouchableOpacity 
-            style={styles.settingsButton}
-            onPress={() => setShowLanguageSelector(!showLanguageSelector)}
-          >
-            <Settings size={20} color="#6B7280" />
-          </TouchableOpacity>
+          <View>
+            <Text style={styles.greeting}>Good morning,</Text>
+            <Text style={styles.userName}>{state.currentUser?.name || 'Chef'}</Text>
+          </View>
+          <View style={styles.headerActions}>
+            <TouchableOpacity style={styles.notificationButton}>
+              <Bell size={24} color="#1A1A1A" />
+              <View style={styles.notificationBadge}>
+                <Text style={styles.badgeText}>3</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.profileButton}>
+              <User size={24} color="#1A1A1A" />
+            </TouchableOpacity>
+          </View>
         </View>
-        <View style={styles.locationContainer}>
-          <MapPin size={16} color="#6B7280" />
-          <Text style={styles.location}>{t.downtownArea}</Text>
-        </View>
+        
+        <Text style={styles.subtitle}>What would you like to cook today?</Text>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Language Selector */}
-        {showLanguageSelector && <LanguageSelector />}
-        
-        {/* Notifications */}
-        <NotificationCenter />
-        
-        {/* Live Tracking */}
-        {activeBooking && <LiveTracking booking={activeBooking} />}
-        
-        {/* Loyalty Card */}
-        <LoyaltyCard />
-        
-        {/* Active Subscriptions */}
-        {state.subscriptions.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t.subscriptionPlans}</Text>
-            {state.subscriptions.map((subscription) => (
-              <SubscriptionCard key={subscription.id} subscription={subscription} />
-            ))}
-          </View>
-        )}
-        
-        {/* AI Menu Suggestions */}
-        <AIMenuSuggestions 
-          suggestions={mockAISuggestions} 
-          onSelectSuggestion={handleAISuggestionSelect}
+        {/* Search Bar */}
+        <SearchBar
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onFilter={handleFilter}
+          placeholder="Search recipes, ingredients..."
         />
 
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <Search size={20} color="#6B7280" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder={t.searchChefs}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-          <TouchableOpacity style={styles.filterButton}>
-            <Filter size={20} color="#3A86FF" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Meal Types */}
+        {/* Trending Categories */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t.mealTypes}</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mealTypes}>
-            {MEAL_TYPES.map((type) => (
-              <TouchableOpacity
-                key={type.id}
-                style={[
-                  styles.mealTypeCard,
-                  selectedMealType === type.id && styles.selectedMealType
-                ]}
-                onPress={() => setSelectedMealType(type.id)}
-              >
-                <Text style={styles.mealTypeEmoji}>{type.emoji}</Text>
-                <Text style={[
-                  styles.mealTypeLabel,
-                  selectedMealType === type.id && styles.selectedMealTypeLabel
-                ]}>
-                  {type.label}
-                </Text>
-              </TouchableOpacity>
+          <View style={styles.sectionHeader}>
+            <TrendingUp size={20} color="#68B684" />
+            <Text style={styles.sectionTitle}>Trending Categories</Text>
+          </View>
+          
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScroll}>
+            {trendingCategories.map((category) => (
+              <CategoryCard
+                key={category.id}
+                category={category}
+                onPress={() => handleCategorySelect(category.id)}
+                isSelected={selectedCategory === category.id}
+              />
             ))}
           </ScrollView>
         </View>
 
-        {/* Available Chefs */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t.availableChefs} ({filteredChefs.length})</Text>
-          {filteredChefs.map((chef) => (
-            <ChefCard
-              key={chef.id}
-              chef={chef}
-              onPress={() => handleChefSelect(chef)}
+        {/* Featured Recipe */}
+        {filteredRecipes.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Featured Recipe</Text>
+            <RecipeCard
+              recipe={filteredRecipes[0]}
+              onPress={() => handleRecipeSelect(filteredRecipes[0])}
+              variant="featured"
             />
-          ))}
+          </View>
+        )}
+
+        {/* Quick & Easy */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Quick & Easy (Under 15 mins)</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.recipesScroll}>
+            {filteredRecipes
+              .filter(recipe => recipe.cookingTime <= 15)
+              .map((recipe) => (
+                <RecipeCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  onPress={() => handleRecipeSelect(recipe)}
+                  variant="compact"
+                />
+              ))}
+          </ScrollView>
         </View>
 
-        {/* Recent Bookings */}
+        {/* All Recipes */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t.recentBookings}</Text>
-          {state.bookings.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Calendar size={48} color="#D1D5DB" />
-              <Text style={styles.emptyStateText}>{t.noBookingsYet}</Text>
-              <Text style={styles.emptyStateSubtext}>{t.bookFirstChef}</Text>
-            </View>
-          ) : (
-            state.bookings.map((booking) => {
-              const chef = state.chefs.find(c => c.id === booking.chefId);
-              return (
-                <View key={booking.id} style={styles.bookingCard}>
-                  <Text style={styles.bookingChef}>{chef?.name}</Text>
-                  <Text style={styles.bookingDetails}>
-                    {booking.mealType} • {booking.date} • ${booking.totalPrice}
-                  </Text>
-                  <Text style={[styles.bookingStatus, { color: booking.status === 'confirmed' ? '#38B000' : '#FBBF24' }]}>
-                    {booking.status.toUpperCase()}
-                  </Text>
-                </View>
-              );
-            })
-          )}
+          <Text style={styles.sectionTitle}>
+            {selectedCategory ? `${selectedCategory} Recipes` : 'All Recipes'} ({filteredRecipes.length})
+          </Text>
+          {filteredRecipes.map((recipe) => (
+            <RecipeCard
+              key={recipe.id}
+              recipe={recipe}
+              onPress={() => handleRecipeSelect(recipe)}
+            />
+          ))}
         </View>
       </ScrollView>
     </View>
@@ -246,24 +190,13 @@ export default function UserPanel() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F7FA',
+    backgroundColor: '#FDFDFD',
   },
   header: {
-    backgroundColor: '#FFFFFF',
     paddingTop: 60,
     paddingBottom: 20,
     paddingHorizontal: 20,
-    borderRadius: 20,
-    marginHorizontal: 16,
-    marginTop: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    backgroundColor: '#FDFDFD',
   },
   headerTop: {
     flexDirection: 'row',
@@ -271,156 +204,77 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
-  title: {
-    fontSize: 28,
+  greeting: {
+    fontSize: 16,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  userName: {
+    fontSize: 24,
     fontWeight: '700',
     color: '#1A1A1A',
-    marginBottom: 8,
   },
-  locationContainer: {
+  headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 12,
   },
-  location: {
-    fontSize: 14,
+  notificationButton: {
+    position: 'relative',
+    padding: 8,
+    borderRadius: 12,
+    backgroundColor: '#F5F5F5',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#FF6B6B',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  profileButton: {
+    padding: 8,
+    borderRadius: 12,
+    backgroundColor: '#F5F5F5',
+  },
+  subtitle: {
+    fontSize: 16,
     color: '#6B7280',
-  },
-  settingsButton: {
-    padding: 12,
-    borderRadius: 16,
-    backgroundColor: '#F5F7FA',
+    marginTop: 4,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginTop: 20,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 12,
-    fontSize: 16,
-    color: '#1A1A1A',
-  },
-  filterButton: {
-    padding: 8,
-    borderRadius: 12,
-    backgroundColor: '#F5F7FA',
   },
   section: {
     marginBottom: 24,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 12,
+    gap: 8,
+  },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
     color: '#1A1A1A',
+    paddingHorizontal: 20,
     marginBottom: 12,
   },
-  mealTypes: {
-    flexDirection: 'row',
+  categoriesScroll: {
+    paddingLeft: 20,
   },
-  mealTypeCard: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 20,
-    marginRight: 12,
-    alignItems: 'center',
-    minWidth: 80,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  selectedMealType: {
-    backgroundColor: '#3A86FF',
-  },
-  mealTypeEmoji: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  mealTypeLabel: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#6B7280',
-    textAlign: 'center',
-  },
-  selectedMealTypeLabel: {
-    color: '#FFFFFF',
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: 40,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  emptyStateText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#6B7280',
-    marginTop: 12,
-  },
-  emptyStateSubtext: {
-    fontSize: 14,
-    color: '#9CA3AF',
-    marginTop: 4,
-  },
-  bookingCard: {
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderRadius: 20,
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  bookingChef: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    marginBottom: 4,
-  },
-  bookingDetails: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 4,
-  },
-  bookingStatus: {
-    fontSize: 12,
-    fontWeight: '600',
+  recipesScroll: {
+    paddingLeft: 20,
   },
 });

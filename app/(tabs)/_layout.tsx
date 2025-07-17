@@ -1,12 +1,12 @@
 import { Tabs } from 'expo-router';
-import { Users, ChefHat, Settings } from 'lucide-react-native';
+import { Home, BookOpen, Calendar, User } from 'lucide-react-native';
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#3B82F6',
+        tabBarActiveTintColor: '#68B684',
         tabBarInactiveTintColor: '#6B7280',
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
@@ -20,27 +20,36 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Book Chef',
+          title: 'Home',
           tabBarIcon: ({ size, color }) => (
-            <Users size={size} color={color} />
+            <Home size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="chef"
+        name="recipes"
         options={{
-          title: 'Chef Panel',
+          title: 'Recipes',
           tabBarIcon: ({ size, color }) => (
-            <ChefHat size={size} color={color} />
+            <BookOpen size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="admin"
+        name="meal-plan"
         options={{
-          title: 'Admin',
+          title: 'Meal Plan',
           tabBarIcon: ({ size, color }) => (
-            <Settings size={size} color={color} />
+            <Calendar size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ size, color }) => (
+            <User size={size} color={color} />
           ),
         }}
       />
