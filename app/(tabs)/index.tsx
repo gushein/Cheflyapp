@@ -246,7 +246,6 @@ export default function UserPanel() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    background: 'linear-gradient(135deg, #FDFDFD 0%, #F5F7FA 100%)',
     backgroundColor: '#F5F7FA',
   },
   header: {
