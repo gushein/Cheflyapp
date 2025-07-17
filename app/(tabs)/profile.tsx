@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { Settings, Heart, Clock, Award, ChefHat, Bell, HelpCircle, LogOut } from 'lucide-react-native';
+import { Settings, Heart, Clock, Award, ChefHat, Bell, CircleHelp as HelpCircle, LogOut } from 'lucide-react-native';
 import { mockUser } from '@/data/mockData';
 
 export default function ProfileScreen() {
