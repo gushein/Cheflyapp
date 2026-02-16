@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SearchBar } from '@/components/SearchBar';
 import { CategoryCard } from '@/components/CategoryCard';
@@ -11,24 +11,34 @@ export default function RecipesScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
-  const [filteredRecipes, setFilteredRecipes] = useState<Recipe[]>(mockRecipes);
 
   const handleFilter = () => {
     console.log('Show filter modal');
   };
 
   const handleCategorySelect = (categoryId: string) => {
-    setSelectedCategory(selectedCategory === categoryId ? null : categoryId);
-    // Filter recipes based on category
-    if (selectedCategory === categoryId) {
-      setFilteredRecipes(mockRecipes);
-    } else {
-      const filtered = mockRecipes.filter(recipe =>
-        recipe.tags.includes(categoryId) || recipe.category === categoryId
-      );
-      setFilteredRecipes(filtered);
-    }
+    setSelectedCategory((currentCategory) => (currentCategory === categoryId ? null : categoryId));
   };
+
+  const filteredRecipes = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    return mockRecipes.filter((recipe) => {
+      const matchesCategory =
+        !selectedCategory || recipe.tags.includes(selectedCategory) || recipe.category === selectedCategory;
+
+      const matchesSearch =
+        normalizedQuery.length === 0 ||
+        recipe.title.toLowerCase().includes(normalizedQuery) ||
+        recipe.description.toLowerCase().includes(normalizedQuery) ||
+        recipe.tags.some((tag) => tag.toLowerCase().includes(normalizedQuery));
+
+      return matchesCategory && matchesSearch;
+    });
+  }, [searchQuery, selectedCategory]);
+
+  const selectedCategoryName =
+    trendingCategories.find((category) => category.id === selectedCategory)?.name ?? selectedCategory;
 
   const handleRecipeSelect = (recipe: Recipe) => {
     setSelectedRecipe(recipe);
@@ -80,15 +90,24 @@ export default function RecipesScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>
-            {selectedCategory ? `${selectedCategory} Recipes` : 'All Recipes'} ({filteredRecipes.length})
+            {selectedCategoryName ? `${selectedCategoryName} Recipes` : 'All Recipes'} ({filteredRecipes.length})
           </Text>
-          {filteredRecipes.map((recipe) => (
-            <RecipeCard
-              key={recipe.id}
-              recipe={recipe}
-              onPress={() => handleRecipeSelect(recipe)}
-            />
-          ))}
+          {filteredRecipes.length > 0 ? (
+            filteredRecipes.map((recipe) => (
+              <RecipeCard
+                key={recipe.id}
+                recipe={recipe}
+                onPress={() => handleRecipeSelect(recipe)}
+              />
+            ))
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateTitle}>No recipes found</Text>
+              <Text style={styles.emptyStateDescription}>
+                Try changing search text or selecting another category.
+              </Text>
+            </View>
+          )}
         </View>
       </ScrollView>
     </View>
@@ -131,5 +150,26 @@ const styles = StyleSheet.create({
   },
   categoriesScroll: {
     paddingLeft: 20,
+  },
+  emptyState: {
+    marginHorizontal: 20,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    alignItems: 'center',
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 8,
+  },
+  emptyStateDescription: {
+    fontSize: 14,
+    textAlign: 'center',
+    color: '#6B7280',
   },
 });
