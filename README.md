@@ -23,3 +23,16 @@ Layihə qabaqcıl proqramlaşdırma dilləri və texnologiyalar üzərində quru
 
 Layihənin vizyonu:
 Bu tətbiq, müasir insanın gündəlik həyatını asanlaşdırmaq, sağlam və fərdiləşdirilmiş yemək imkanlarını genişləndirmək və aşbazlar üçün yeni, çevik iş imkanları yaratmaq məqsədilə hazırlanıb. Biz inanırıq ki, texnologiya və insan qabiliyyətlərinin birləşməsi sayəsində insanlar ev rahatlığında yüksək keyfiyyətli yemək təcrübəsi yaşayacaq, aşbazlar isə öz peşəkarlığını daha geniş kütləyə təqdim etmək imkanı qazanacaq.
+
+## Local one-click start
+To run Chefly web locally with one command:
+
+```bash
+npm run open:local
+```
+
+Optional custom port:
+
+```bash
+bash ./scripts/open-local.sh 8081
+```
