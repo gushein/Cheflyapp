@@ -23,6 +23,8 @@ export default function AdminPanel() {
   useEffect(() => {
     // Initialize data
     dispatch({ type: 'SET_CHEFS', payload: mockChefs });
+    dispatch({ type: 'SET_BOOKINGS', payload: mockBookings });
+    dispatch({ type: 'SET_INVOICES', payload: mockInvoices });
     dispatch({ type: 'SET_USER', payload: mockUser });
     
     // Calculate admin stats

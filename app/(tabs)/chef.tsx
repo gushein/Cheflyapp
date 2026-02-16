@@ -27,6 +27,7 @@ export default function ChefPanel() {
 
   useEffect(() => {
     dispatch({ type: 'SET_CHEFS', payload: mockChefs });
+    dispatch({ type: 'SET_BOOKINGS', payload: mockBookings });
     
     // Calculate stats
     const chefBookings = mockBookings.filter(booking => booking.chefId === currentChef.id);

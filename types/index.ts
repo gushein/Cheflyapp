@@ -51,6 +51,135 @@ export interface NutritionFacts {
   sodium: number;
 }
 
+export type BookingStatus =
+  | 'pending'
+  | 'confirmed'
+  | 'chef-en-route'
+  | 'chef-arrived'
+  | 'cooking'
+  | 'completed'
+  | 'cancelled';
+
+export interface ChefLocation {
+  lat: number;
+  lng: number;
+  address: string;
+}
+
+export interface Chef {
+  id: string;
+  name: string;
+  bio: string;
+  profileImage: string;
+  rating: number;
+  reviewCount: number;
+  location: string;
+  priceRange: string;
+  experienceYears: number;
+  specialties: string[];
+  verified: boolean;
+  isAvailable: boolean;
+  liveStreamingEnabled: boolean;
+  currentLocation?: ChefLocation;
+}
+
+export interface Booking {
+  id: string;
+  userId: string;
+  chefId: string;
+  date: Date;
+  time: Date;
+  duration: number;
+  address: string;
+  mealType: string;
+  totalPrice: number;
+  status: BookingStatus;
+  trackingEnabled?: boolean;
+  chefLocation?: ChefLocation;
+  estimatedArrival?: string;
+}
+
+export interface Review {
+  id: string;
+  bookingId: string;
+  chefId: string;
+  userId: string;
+  rating: number;
+  comment: string;
+  createdAt: Date;
+}
+
+export interface Subscription {
+  id: string;
+  userId: string;
+  type: 'basic-10' | 'premium-20' | 'daily-lunch' | 'weekly-dinner' | 'diet-plan';
+  sessionsTotal: number;
+  sessionsUsed: number;
+  discount: number;
+  price: number;
+  isActive: boolean;
+  startDate: Date;
+  endDate: Date;
+}
+
+export interface LoyaltyReward {
+  id: string;
+  name: string;
+  description: string;
+  pointsRequired: number;
+  discountPercentage: number;
+  type: 'discount' | 'upgrade' | 'free-session';
+  isActive: boolean;
+}
+
+export interface AIMenuSuggestion {
+  id: string;
+  cuisineType: string;
+  mealType: string;
+  ingredients: string[];
+  matchScore: number;
+  difficulty: 'easy' | 'medium' | 'hard';
+  estimatedCookingTime: number;
+  nutritionalInfo: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
+  reason: string;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type:
+    | 'booking-confirmed'
+    | 'chef-en-route'
+    | 'chef-arrived'
+    | 'cooking-started'
+    | 'meal-ready'
+    | 'loyalty-reward'
+    | 'subscription-reminder';
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: Date;
+  data?: Record<string, string | number | boolean>;
+}
+
+export interface Invoice {
+  id: string;
+  bookingId: string;
+  chefId: string;
+  invoiceNumber: string;
+  issueDate: Date;
+  dueDate: Date;
+  subtotal: number;
+  tax: number;
+  total: number;
+  status: 'paid' | 'pending' | 'overdue';
+}
+
 export interface MealPlan {
   id: string;
   userId: string;
@@ -82,6 +211,7 @@ export interface User {
   favoriteRecipes: string[];
   mealPlans: string[];
   weeklyGoal: number; // meals to cook per week
+  loyaltyPoints?: number;
   preferences: UserPreferences;
   createdAt: Date;
 }

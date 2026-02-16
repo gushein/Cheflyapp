@@ -20,6 +20,7 @@ type AppAction =
   | { type: 'SET_USER'; payload: User | null }
   | { type: 'SET_CHEFS'; payload: Chef[] }
   | { type: 'UPDATE_CHEF_LOCATION'; payload: { chefId: string; location: any } }
+  | { type: 'SET_BOOKINGS'; payload: Booking[] }
   | { type: 'ADD_BOOKING'; payload: Booking }
   | { type: 'UPDATE_BOOKING'; payload: { id: string; updates: Partial<Booking> } }
   | { type: 'ADD_REVIEW'; payload: Review }
@@ -71,6 +72,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
             : chef
         )
       };
+    case 'SET_BOOKINGS':
+      return { ...state, bookings: action.payload };
     case 'ADD_BOOKING':
       return { ...state, bookings: [...state.bookings, action.payload] };
     case 'UPDATE_BOOKING':
